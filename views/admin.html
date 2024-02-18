@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+    <div class="loader">
+
+    </div>
+<div class="container">
+    <form id="submit-form">
+        <h3>Submit Project Info</h3>
+        <fieldset>
+            <input name="username" id="user_name" placeholder="Username" type="text" tabindex="1" required autofocus>
+        </fieldset>
+        <fieldset>
+            <input name="password" id="pass_word" placeholder="Password" type="password" tabindex="1" required autofocus>
+        </fieldset>
+        <fieldset>
+            <input name="projectname" placeholder="Project Name" type="text" tabindex="1" required autofocus>
+        </fieldset>
+        <fieldset>
+            <input name="link" placeholder="Link" type="text" tabindex="2" required>
+        </fieldset>
+       
+        <fieldset>
+            <textarea name="projectdesc" placeholder="Description about the project" tabindex="5" required></textarea>
+        </fieldset>
+        <fieldset>
+        <select name="skill" id="skill" required>
+            <option value="" >Select a option...</option>
+            <option value="web">Websites</option>
+            <option value="apps">Apps</option>
+            <option value="photoshoped">Photoshoped</option>
+            <option value="video-editing">Video Editing</option>
+        </select>
+        </fieldset>
+        <fieldset>
+            <label for="">Choose a Image</label>
+            <input name="pic" type="file" id='file' required>
+        </fieldset>
+        <fieldset>
+            <button name="submit" type="submit" id="contact-submit" data-submit="...Sending">Submit</button>
+        </fieldset>
+       
+        <p class="copyright">Designed by <a href="https://colorlib.com">Phurpa</a>
+        </p>
+    </form>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.5.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.5.0/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.5.0/firebase-database.js"></script>
+<script>
+   
+        const firebaseConfig = {
+            apiKey: "AIzaSyDc1mifuSY0Wu1pKN1I-v1q2ZK4Pt0dFQk",
+            authDomain: "portfolio-website-285a9.firebaseapp.com",
+            databaseURL: "https://portfolio-website-285a9-default-rtdb.firebaseio.com",
+            projectId: "portfolio-website-285a9",
+            storageBucket: "portfolio-website-285a9.appspot.com",
+            messagingSenderId: "706744132737",
+            appId: "1:706744132737:web:5421750b97204fcf99d980",
+            measurementId: "G-3YZQ9Y6BBS"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        
+      
+        
+</script>
+
+<script>
+       var file;
+        document.getElementById('file').addEventListener('change', (ev) => {
+            file = ev.target.files[0];
+           
+            
+        })
+    document.getElementById('submit-form').addEventListener('submit',(e)=>{
+        e.preventDefault();
+       
+        var skill=e.target.skill.value;
+        var projectname=e.target.projectname.value;
+        
+        
+        fetch('/newproject', {
+            method: 'POST',
+            body: new URLSearchParams(new FormData(event.target)) // event.target is the form
+        }).then((resp) => {
+            if(resp.status==200){
+                alert('Inforamtion Stored')
+                console.log(file.name)
+                
+                var task = firebase.storage().ref('Image/' + file.name).put(file);
+                task.on('state_changed', function (snapshot) {
+                   var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(percentage)
+                    document.querySelector(".loader").style.width=percentage+"%";
+                    if(percentage==100){
+                        document.querySelector(".loader").style.backgroundColor="green";
+                    }
+                }, function (error) {
+                    alert(error)
+                }, function () {
+                    task.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        console.log(downloadURL)
+                        firebase.database().ref('User/MyWorks/' + skill + "/" + projectname + "/imglink").set({ downloadURL },(error)=>{
+                             if(error){
+                                 alert(error)
+                             }
+                             else{
+                                alert('File Uploaded Succesfully')
+                                document.querySelector(".loader").style.width="0%";
+                                document.getElementById('submit-form').reset();
+                             }
+                        })
+                    });
+                })
+                return false;
+            }
+            else{
+                console.log(resp.status)
+                  return resp.json();
+            }
+           // or resp.text() or whatever the server sends
+        }).then((body) => {
+            if(body.msg!=undefined){
+                alert(body.msg)
+            }
+
+            // TODO handle body
+        }).catch((error) => {
+            // TODO handle error
+        });
+    })
+</script>
+
+
+</body>
+</html>
